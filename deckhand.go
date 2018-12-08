@@ -102,6 +102,10 @@ func main() {
 
 }
 
+/*
+	Iterate through the deployments and save them to a file
+
+*/
 func SaveDeployments(Deployments []v1.Deployment, path string) {
 	// loop through each deployment and create a a deployment yaml
 	for _, deploy := range Deployments {
