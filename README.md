@@ -3,4 +3,7 @@
 
 Kubernetes State saver for GitOps like functionality.
 
-More info to follow
+
+
+## ENV VARS
+The Application can be configured using env vars. Each ENV var is prefixed with DECK_*
