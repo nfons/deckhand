@@ -4,7 +4,11 @@ import (
 	"fmt"
 	"github.com/ghodss/yaml" // this is better than regular yaml
 	"github.com/kelseyhightower/envconfig"
+	"golang.org/x/crypto/ssh"
 	"gopkg.in/robfig/cron.v2"
+	"gopkg.in/src-d/go-git.v4"
+	"gopkg.in/src-d/go-git.v4/plumbing/object"
+	ssh2 "gopkg.in/src-d/go-git.v4/plumbing/transport/ssh"
 	"io/ioutil"
 	"k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -15,25 +19,29 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"time"
 )
 
 var clientset *kubernetes.Clientset
+
+const directory = "repo"
+
+var deck_config DeckConfig
+var createPath string
+var auth *ssh2.PublicKeys
 
 type DeckConfig struct {
 	GitRepo        string `envconfig:"GIT_REPO" required:"true"`
 	SyncInterval   string `default:"30s"`
 	ClusterName    string `envconfig:"CLUSTER_NAME" default:"dev"`
 	UseReplicaSets bool   `encconfig:"USE_REPLICA_SETS" default:"false"`
+	SSH_KEY        string `envconfig:"SSH_KEY"`
 }
-
-var deck_config DeckConfig
-var createPath string
 
 func main() {
 
 	// set kubeconfig, probably will disable this later
 	kubeconfig := filepath.Join(os.Getenv("HOME"), ".kube", "config")
-
 	err := envconfig.Process("deck", &deck_config)
 	if err != nil {
 		log.Fatal(err.Error())
@@ -44,7 +52,24 @@ func main() {
 	log.Println("Setting Cluster Name as: " + deck_config.ClusterName)
 	log.Println("Setting Resync Interval at: " + deck_config.SyncInterval)
 
-	createPath = filepath.Join("states", deck_config.ClusterName)
+	createPath = filepath.Join(directory, "state", deck_config.ClusterName)
+
+	// Clone the Git Repo, Currently Only SSH
+
+	// We might be able to pass this in via cmd line or env
+	sshkey := deck_config.SSH_KEY
+	signer, _ := ssh.ParsePrivateKey([]byte(sshkey))
+	auth = &ssh2.PublicKeys{User: "git", Signer: signer}
+
+	_, giterr := git.PlainClone(directory, false, &git.CloneOptions{
+		URL:      deck_config.GitRepo,
+		Progress: os.Stdout,
+		Auth:     auth,
+	})
+
+	if giterr != nil {
+		log.Fatal(giterr)
+	}
 
 	// check if the cluster named folder exists
 	if _, err := os.Stat(createPath); os.IsNotExist(err) {
@@ -81,23 +106,83 @@ func main() {
 // Syncs current k8s state with git state
 func sync() {
 	gitPullMaster()
-	gitStatusCheck()
-	gitPushMaster()
+	if gitStatusCheck() == false {
+		gitPushMaster()
+	}
 
 }
 
 // initialize the remote git repo by pulling it. We will need to run this step first every time deck hand is init.
 func gitPullMaster() {
+	r, err := git.PlainOpen(directory)
+	CheckIfError(err)
+	worktree, err := r.Worktree()
 
+	CheckIfError(err)
+
+	pullerr := worktree.Pull(&git.PullOptions{
+		RemoteName: "origin",
+		Auth:       auth,
+	})
+
+	if pullerr != nil {
+		errstr := pullerr.Error()
+		if errstr != "already up-to-date" {
+			log.Fatal(err)
+		}
+	}
 }
 
 // This function will check the status of the current git repo + against the remote
-func gitStatusCheck() {
+func gitStatusCheck() bool {
+	r, err := git.PlainOpen(directory)
+	CheckIfError(err)
 
+	workTree, err := r.Worktree()
+
+	CheckIfError(err)
+	status, err := workTree.Status()
+	CheckIfError(err)
+
+	return status.IsClean()
 }
 
 func gitPushMaster() {
+	r, err := git.PlainOpen(directory)
+	CheckIfError(err)
 
+	// add the outstanding files
+	worktree, err := r.Worktree()
+
+	CheckIfError(err)
+
+	// Get the outstanding items
+	status, _ := worktree.Status()
+
+	for key := range status {
+		worktree.Add(key)
+	}
+
+	// Commit the current state to git
+	commitMsg := fmt.Sprintf("K8s State @ %s ", time.Now())
+	commit, err := worktree.Commit(commitMsg, &git.CommitOptions{
+		Author: &object.Signature{
+			Name: "Deck Hand",
+			When: time.Now(),
+		},
+	})
+	CheckIfError(err)
+
+	_, err = r.CommitObject(commit)
+
+	CheckIfError(err)
+
+	err = r.Push(&git.PushOptions{
+		RemoteName: "origin",
+		Auth:       auth,
+	})
+
+	CheckIfError(err)
 }
 
 // This function is the one that does the heavy lifting and actually gets the k8s state
@@ -176,26 +261,6 @@ func SaveDeployments(Deployments []v1.Deployment, path string) {
 	}
 }
 
-func SaveDeploy(deploy v1.Deployment, path string) {
-	yamlName := fmt.Sprintf("%s/%s.deploy.yaml", path, deploy.Name)
-
-	// create kctl deployment struct
-	deployment := KubeStruct{}
-
-	deployment.ApiVersion = "apps/v1"
-	deployment.Kind = "Deployment"
-
-	deployment.Metadata = deploy.ObjectMeta
-	deployment.Spec = deploy.Spec
-
-	// save the deployment file
-	marshalYaml, err := yaml.Marshal(deployment)
-	if err != nil {
-		log.Panic(err)
-	}
-	saveFile(marshalYaml, yamlName)
-}
-
 /*
 	Iterate through the deployments and save them to a file
 
@@ -207,26 +272,6 @@ func SaveStatefulset(StatefulSets []v1.StatefulSet, path string) {
 	}
 }
 
-func SaveSS(deploy v1.StatefulSet, path string) {
-	yamlName := fmt.Sprintf("%s/%s.statefulset.yaml", path, deploy.Name)
-
-	// create kctl deployment struct
-	deployment := KubeStruct{}
-
-	deployment.ApiVersion = "apps/v1"
-	deployment.Kind = "StatefulSet"
-
-	deployment.Metadata = deploy.ObjectMeta
-	deployment.Spec = deploy.Spec
-
-	// save the deployment file
-	marshalYaml, err := yaml.Marshal(deployment)
-	if err != nil {
-		log.Panic(err)
-	}
-	saveFile(marshalYaml, yamlName)
-}
-
 func SaveDaeomonSet(daeomonset []v1.DaemonSet, path string) {
 	// loop through each DS and create a a deployment yaml
 	for _, deploy := range daeomonset {
@@ -234,56 +279,9 @@ func SaveDaeomonSet(daeomonset []v1.DaemonSet, path string) {
 	}
 }
 
-func SaveDS(deploy v1.DaemonSet, path string) {
-	yamlName := fmt.Sprintf("%s/%s.daemonset.yaml", path, deploy.Name)
-
-	// create kctl deployment struct
-	deployment := KubeStruct{}
-
-	deployment.ApiVersion = "apps/v1"
-	deployment.Kind = "DaemonSet"
-
-	deployment.Metadata = deploy.ObjectMeta
-	deployment.Spec = deploy.Spec
-
-	// save the deployment file
-	marshalYaml, err := yaml.Marshal(deployment)
-	if err != nil {
-		log.Panic(err)
-	}
-	saveFile(marshalYaml, yamlName)
-}
-
 func SaveReplicaSets(rcs []v1.ReplicaSet, path string) {
 	// loop through each RS and create a a deployment yaml
 	for _, deploy := range rcs {
 		SaveRS(deploy, path)
-	}
-}
-
-func SaveRS(deploy v1.ReplicaSet, path string) {
-	yamlName := fmt.Sprintf("%s/%s.replicaset.yaml", path, deploy.Name)
-
-	// create kctl deployment struct
-	deployment := KubeStruct{}
-
-	deployment.ApiVersion = "apps/v1"
-	deployment.Kind = "ReplicaSet"
-
-	deployment.Metadata = deploy.ObjectMeta
-	deployment.Spec = deploy.Spec
-
-	// save the deployment file
-	marshalYaml, err := yaml.Marshal(deployment)
-	if err != nil {
-		log.Panic(err)
-	}
-	saveFile(marshalYaml, yamlName)
-}
-
-func saveFile(marshalYaml []byte, yamlName string) {
-	writeErr := ioutil.WriteFile(yamlName, marshalYaml, 0644)
-	if writeErr != nil {
-		log.Fatal(writeErr)
 	}
 }

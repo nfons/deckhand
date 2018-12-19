@@ -6,6 +6,9 @@ RUN chmod +x /usr/bin/dep
 WORKDIR /go/src/github.com/nfons/deckhand
 ADD . .
 
+# not sure if we need this
+RUN rm -rf .git/
+
 RUN dep ensure
 RUN go build -o deckhand
 

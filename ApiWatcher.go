@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -73,12 +74,57 @@ func WatchApis() {
 
 }
 
-func ResourceDeleted(obj interface{}) {
+// Only used in the resource deleted field
+func getResourceInfo(obj interface{}) (string, string, string) {
+	switch val := obj.(type) {
+	default:
+		log.Panic("unknown type in deletion")
+		log.Fatal(val)
+	case *v1.DaemonSet:
+		return val.Name, "daemonset", val.Namespace
+	case *v1.StatefulSet:
+		return val.Name, "statefulset", val.Namespace
+	case *v1.Deployment:
+		return val.Name, "deployment", val.Namespace
+	case *v1.ReplicaSet:
+		return val.Name, "replicaset", val.Namespace
+	}
+	return "", "", ""
+}
 
+func ResourceDeleted(obj interface{}) {
+	name, rtype, namespace := getResourceInfo(obj)
+	filename := fmt.Sprintf("%s.%s.yaml", name, rtype)
+	file := filepath.Join(createPath, namespace, filename)
+	if name != "" {
+		deleteFile(file)
+	}
 }
 
 func ResourceAdded(obj interface{}) {
-
+	switch val := obj.(type) {
+	default:
+		log.Panic("Unknown Type: ")
+		log.Println(val)
+		return
+	case *v1.Deployment:
+		log.Println("Deployment Added " + val.Name)
+		namespacePath := filepath.Join(createPath, val.Namespace)
+		SaveDeploy(*val, namespacePath)
+	case *v1.ReplicaSet:
+		if deck_config.UseReplicaSets == true {
+			namespacePath := filepath.Join(createPath, val.Namespace)
+			SaveRS(*val, namespacePath)
+		}
+	case *v1.DaemonSet:
+		log.Println("DaemonSet Added " + val.Name)
+		namespacePath := filepath.Join(createPath, val.Namespace)
+		SaveDS(*val, namespacePath)
+	case *v1.StatefulSet:
+		log.Println("Satefulset Added " + val.Name)
+		namespacePath := filepath.Join(createPath, val.Namespace)
+		SaveSS(*val, namespacePath)
+	}
 }
 
 func ResourceUpdated(old interface{}, obj interface{}) {
@@ -93,7 +139,6 @@ func ResourceUpdated(old interface{}, obj interface{}) {
 	case *v1.Deployment:
 		if reflect.DeepEqual(old, obj) == false {
 			log.Println("Deployment Updated " + val.Name)
-			log.Println("Deploy Version: " + val.ObjectMeta.ResourceVersion)
 			namespacePath := filepath.Join(createPath, val.Namespace)
 			SaveDeploy(*val, namespacePath)
 		}
@@ -106,11 +151,13 @@ func ResourceUpdated(old interface{}, obj interface{}) {
 		}
 	case *v1.DaemonSet:
 		if reflect.DeepEqual(obj, old) == false {
+			log.Println("Daemonset Updated " + val.Name)
 			namespacePath := filepath.Join(createPath, val.Namespace)
 			SaveDS(*val, namespacePath)
 		}
 	case *v1.StatefulSet:
 		if reflect.DeepEqual(old, obj) == false {
+			log.Println("Statefulset Updated " + val.Name)
 			namespacePath := filepath.Join(createPath, val.Namespace)
 			SaveSS(*val, namespacePath)
 		}
