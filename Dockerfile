@@ -9,7 +9,9 @@ ADD . .
 # not sure if we need this
 RUN rm -rf .git/
 
-RUN dep ensure
+RUN go get -d -v ./...
+
+
 RUN go build -o deckhand
 
 ENTRYPOINT ["sh", "-c", "ssh"]

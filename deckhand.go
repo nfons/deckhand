@@ -9,6 +9,7 @@ import (
 	"gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
 	ssh2 "gopkg.in/src-d/go-git.v4/plumbing/transport/ssh"
+
 	"io/ioutil"
 	"k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -36,16 +37,41 @@ type DeckConfig struct {
 	ClusterName    string `envconfig:"CLUSTER_NAME" default:"dev"`
 	UseReplicaSets bool   `encconfig:"USE_REPLICA_SETS" default:"false"`
 	SSH_KEY        string `envconfig:"SSH_KEY"`
+	KUBE_CONF      string `envconfig:"KUBE_CONF"`
 }
 
 func main() {
 
-	// set kubeconfig, probably will disable this later
 	kubeconfig := filepath.Join(os.Getenv("HOME"), ".kube", "config")
-	err := envconfig.Process("deck", &deck_config)
-	if err != nil {
-		log.Fatal(err.Error())
+	enverr := envconfig.Process("deck", &deck_config)
+	if enverr != nil {
+		log.Fatal(enverr.Error())
 	}
+
+	// Allow the passing in of kubeconf as a env var..really only useful for running this via docker outside cluster
+	if deck_config.KUBE_CONF != "" {
+		// create k8s conf path if it doesn't exist
+		if _, err := os.Stat(filepath.Join(os.Getenv("HOME"), ".kube")); os.IsNotExist(err) {
+			// need to create this path
+			os.MkdirAll(filepath.Join(os.Getenv("HOME"), ".kube"), 0777)
+			file, openErr := os.Create(kubeconfig)
+			if openErr != nil {
+				log.Fatal("Cannot Open File " + openErr.Error())
+			}
+			defer file.Close()
+			fmt.Fprintf(file, deck_config.KUBE_CONF)
+		}
+	}
+
+	// set kubeconfig, probably will disable this later
+	// use the current context in kubeconfig
+	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	// create the clientset, to use for our api
+	clientset, err = kubernetes.NewForConfig(config)
 
 	// Debugging for log purposes
 	log.Println("Using Git Repo: " + deck_config.GitRepo)
@@ -60,6 +86,9 @@ func main() {
 	sshkey := deck_config.SSH_KEY
 	signer, _ := ssh.ParsePrivateKey([]byte(sshkey))
 	auth = &ssh2.PublicKeys{User: "git", Signer: signer}
+
+	//needed for known_host error during docker runs
+	auth.HostKeyCallback = ssh.InsecureIgnoreHostKey()
 
 	_, giterr := git.PlainClone(directory, false, &git.CloneOptions{
 		URL:      deck_config.GitRepo,
@@ -76,15 +105,6 @@ func main() {
 		// need to create this path
 		os.MkdirAll(createPath, 0777)
 	}
-
-	// use the current context in kubeconfig
-	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
-	if err != nil {
-		panic(err.Error())
-	}
-
-	// create the clientset, to use for our api
-	clientset, err = kubernetes.NewForConfig(config)
 
 	// on init, get k8s state, this will get the latest
 	log.Println("Syncing initial K8s State")

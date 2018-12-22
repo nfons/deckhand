@@ -14,17 +14,15 @@ The Application can be configured using env vars. Each ENV var is prefixed with 
 Current ENV Vars:
 
 
-    type DeckConfig struct {
-        GitRepo        string `envconfig:"GIT_REPO" required:"true"`
-        SyncInterval   string `default:"30s"`
-        ClusterName    string `envconfig:"CLUSTER_NAME" default:"dev"`
-        UseReplicaSets bool   `encconfig:"USE_REPLICA_SETS" default:"false"`
-    }
+| ENV Var Name  | Type  |  Default | Required  |  Comment |
+|---|---|---|---|---|
+|  GIT_REPO |  string | nil   | Y  | Git Repo you want to save states to   |
+|  SYNCINTERVAL | string   | 30s   | N  | Must be valid go time parse duration format  https://golang.org/pkg/time/#ParseDuration |
+|  CLUSTER_NAME | string  | dev  | N  |  cluster name you wnat to save under  |
+| USE_REPLICA_SETS| bool | F | N |  If you want to save replica sets as well (not recommended) ||
+|SSH_KEY | string | nil | Y| SSH Private key you want to use to connect to git repo |
+
 
 # Getting Started
 Coming soon
 
-# Design Decisions
-## Why only mutable resources?
-   We consider things like Services, Secrets , etc to be "immutable" in the sense that the probability of these changing during a CI/CD pipeline is slim.
-  Services and its like, will unlikely to change from deployment to deployment, as such it's better to store them in a static repo than one that can be dynamic.
