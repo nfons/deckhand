@@ -1,7 +1,6 @@
-FROM golang:stretch
+#### BUILDER
 
-ADD https://github.com/golang/dep/releases/download/v0.4.1/dep-linux-amd64 /usr/bin/dep
-RUN chmod +x /usr/bin/dep
+FROM golang:stretch AS builder
 
 WORKDIR /go/src/github.com/nfons/deckhand
 ADD . .
@@ -11,7 +10,15 @@ RUN rm -rf .git/
 
 RUN go get -d -v ./...
 
+RUN go build -o /go/bin/deckhand
 
-RUN go build -o deckhand
+
+## Actual small img
+FROM alpine:3.6
+
+WORKDIR /go/bin
+
+COPY --from=builder /go/bin/deckhand /go/bin/deckhand
+
 
 ENTRYPOINT ["sh", "-c", "ssh"]

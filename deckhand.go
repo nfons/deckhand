@@ -9,13 +9,14 @@ import (
 	"gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
 	ssh2 "gopkg.in/src-d/go-git.v4/plumbing/transport/ssh"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
 
 	"io/ioutil"
 	"k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
-	"k8s.io/client-go/tools/clientcmd"
 	"log"
 	"net/http"
 	"os"
@@ -38,6 +39,7 @@ type DeckConfig struct {
 	UseReplicaSets bool   `encconfig:"USE_REPLICA_SETS" default:"false"`
 	SSH_KEY        string `envconfig:"SSH_KEY"`
 	KUBE_CONF      string `envconfig:"KUBE_CONF"`
+	STORE_ALL      bool   `envconfig:"STORE_ALL" default:"false"`
 }
 
 func main() {
@@ -63,13 +65,18 @@ func main() {
 		}
 	}
 
-	// set kubeconfig, probably will disable this later
-	// use the current context in kubeconfig
-	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
+	config, err := rest.InClusterConfig()
 	if err != nil {
-		panic(err.Error())
-	}
+		log.Println(err.Error())
+		// Try to use local config?
+		// set kubeconfig, probably will disable this later
+		// use the current context in kubeconfig
+		config, err = clientcmd.BuildConfigFromFlags("", kubeconfig)
+		if err != nil {
+			panic(err.Error())
+		}
 
+	}
 	// create the clientset, to use for our api
 	clientset, err = kubernetes.NewForConfig(config)
 
@@ -100,6 +107,9 @@ func main() {
 		log.Fatal(giterr)
 	}
 
+	// pull master real quick to make sure we are tip top updated
+	gitPullMaster()
+
 	// check if the cluster named folder exists
 	if _, err := os.Stat(createPath); os.IsNotExist(err) {
 		// need to create this path
@@ -128,6 +138,8 @@ func sync() {
 	gitPullMaster()
 	if gitStatusCheck() == false {
 		gitPushMaster()
+	} else {
+		log.Println(" Status is clean, skipping push")
 	}
 
 }
@@ -148,7 +160,7 @@ func gitPullMaster() {
 	if pullerr != nil {
 		errstr := pullerr.Error()
 		if errstr != "already up-to-date" {
-			log.Fatal(err)
+			log.Fatal(errstr)
 		}
 	}
 }
@@ -184,7 +196,7 @@ func gitPushMaster() {
 	}
 
 	// Commit the current state to git
-	commitMsg := fmt.Sprintf("K8s State @ %s ", time.Now())
+	commitMsg := fmt.Sprintf("K8s State @ %s ", time.Now().Format(time.RFC1123))
 	commit, err := worktree.Commit(commitMsg, &git.CommitOptions{
 		Author: &object.Signature{
 			Name: "Deck Hand",
