@@ -10,7 +10,7 @@ RUN rm -rf .git/
 
 RUN go get -d -v ./...
 
-RUN go build -o /go/bin/deckhand
+RUN GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o /go/bin/deckhand
 
 
 ## Actual small img
@@ -20,5 +20,4 @@ WORKDIR /go/bin
 
 COPY --from=builder /go/bin/deckhand /go/bin/deckhand
 
-
-ENTRYPOINT ["sh", "-c", "ssh"]
+ENTRYPOINT ["/go/bin/deckhand"]

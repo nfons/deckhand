@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/kubernetes/pkg/apis/core"
@@ -12,65 +13,44 @@ import (
 	"reflect"
 )
 
+func WatchList(resource string, resourceType runtime.Object) cache.Controller {
+	watchlist := cache.NewListWatchFromClient(clientset.AppsV1().RESTClient(), resource, core.NamespaceAll, fields.Everything())
+	_, controller := cache.NewInformer(
+		watchlist,
+		resourceType,
+		-1,
+		cache.ResourceEventHandlerFuncs{
+			AddFunc:    ResourceAdded,
+			UpdateFunc: ResourceUpdated,
+			DeleteFunc: ResourceDeleted,
+		})
+
+	return controller
+}
+
 /*
 	This Code Will listen to the Kube API and run file saver based on the resource returned by API Server
 */
-
 func WatchApis() {
-	//listen to deployment changes
-	watchListDeployment := cache.NewListWatchFromClient(clientset.AppsV1().RESTClient(), "deployments", core.NamespaceAll, fields.Everything())
-	_, controller := cache.NewInformer(
-		watchListDeployment,
-		&v1.Deployment{},
-		-1,
-		cache.ResourceEventHandlerFuncs{
-			AddFunc:    ResourceAdded,
-			UpdateFunc: ResourceUpdated,
-			DeleteFunc: ResourceDeleted,
-		})
-
-	watchListSS := cache.NewListWatchFromClient(clientset.AppsV1().RESTClient(), "statefulsets", core.NamespaceAll, fields.Everything())
-	_, controllerSS := cache.NewInformer(
-		watchListSS,
-		&v1.StatefulSet{},
-		-1,
-		cache.ResourceEventHandlerFuncs{
-			AddFunc:    ResourceAdded,
-			UpdateFunc: ResourceUpdated,
-			DeleteFunc: ResourceDeleted,
-		})
-
-	watchListRS := cache.NewListWatchFromClient(clientset.AppsV1().RESTClient(), "replicasets", core.NamespaceAll, fields.Everything())
-	_, controllerRS := cache.NewInformer(
-		watchListRS,
-		&v1.ReplicaSet{},
-		-1,
-		cache.ResourceEventHandlerFuncs{
-			AddFunc:    ResourceAdded,
-			UpdateFunc: ResourceUpdated,
-			DeleteFunc: ResourceDeleted,
-		})
+	controller := WatchList("deployments", &v1.Deployment{})
+	controllerSS := WatchList("statefulsets", &v1.StatefulSet{})
+	controllerDS := WatchList("daemonsets", &v1.DaemonSet{})
 
 	// Only use Replica Sets if we need to since deploys == rs
 
 	if deck_config.UseReplicaSets == true {
-		watchListDS := cache.NewListWatchFromClient(clientset.AppsV1().RESTClient(), "daemonsets", core.NamespaceAll, fields.Everything())
-		_, controllerDS := cache.NewInformer(
-			watchListDS,
-			&v1.DaemonSet{},
-			-1,
-			cache.ResourceEventHandlerFuncs{
-				AddFunc:    ResourceAdded,
-				UpdateFunc: ResourceUpdated,
-				DeleteFunc: ResourceDeleted,
-			})
-		go controllerDS.Run(wait.NeverStop)
+		go WatchList("relicasets", &v1.ReplicaSet{}).Run(wait.NeverStop)
+	}
+
+	// Only get Secrets, Config Maps, Services, Ingress only if its added
+	if deck_config.STORE_ALL == true {
+		//  TODO
 	}
 
 	// IDK if I need all these
 	go controller.Run(wait.NeverStop)
 	go controllerSS.Run(wait.NeverStop)
-	go controllerRS.Run(wait.NeverStop)
+	go controllerDS.Run(wait.NeverStop)
 
 }
 
