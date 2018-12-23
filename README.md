@@ -10,6 +10,8 @@ The objective is to save the current k8s mutable state to re-create a cluster in
 
 ![General Architecture](https://i.imgur.com/jNPSMhE.png)
 
+![Gen arch1](https://i.imgur.com/hNyZ4NF.png)
+
 ## ENV VARS
 The Application can be configured using env vars. Each ENV var is prefixed with DECK_*
 Current ENV Vars:
@@ -17,12 +19,13 @@ Current ENV Vars:
 
 | ENV Var Name  | Type  |  Default | Required  |  Comment |
 |---|---|---|---|---|
-|  GIT_REPO |  string | nil   | Y  | Git Repo you want to save states to   |
-|  SYNCINTERVAL | string   | 30s   | N  | Must be valid go time parse duration format  https://golang.org/pkg/time/#ParseDuration |
-|  CLUSTER_NAME | string  | dev  | N  |  cluster name you want to save under  |
-| USE_REPLICA_SETS| bool | F | N |  If you want to save replica sets as well (not recommended) ||
-|SSH_KEY | string | nil | Y| SSH Private key you want to use to connect to git repo |
-
+|  DECK_GIT_REPO |  string | nil   | Y  | Git Repo you want to save states to   |
+|  DECK_SYNCINTERVAL | string   | 30s   | N  | Must be valid go time parse duration format  https://golang.org/pkg/time/#ParseDuration |
+|  DECK_CLUSTER_NAME | string  | dev  | N  |  cluster name you want to save under  |
+| DECK_USE_REPLICA_SETS| bool | F | N |  If you want to save replica sets as well (not recommended) ||
+|DECK_SSH_KEY | string | nil | Y| SSH Private key you want to use to connect to git repo |
+|DECK_GIT_USER| string| nil | N | Git username you will use if using https git|
+|DECK_GIT_PASSWORD|string|nil|N| Git password if using https git|
 
 
 
