@@ -1,6 +1,6 @@
 ## Deck Hand
 [![Go Report Card](https://goreportcard.com/badge/github.com/nfons/deckhand)](https://goreportcard.com/report/github.com/nfons/deckhand)
-
+[![Licence](https://img.shields.io/aur/license/:packageName.svg)](https://github.com/nfons/deckhand/blob/master/LICENSE)
 Kubernetes State saver for GitOps like functionality.
 
 
