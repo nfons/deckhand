@@ -66,6 +66,6 @@ We will assume you have a cluster running (like minikube, or docker-k8s)
 
 4. `kubectl create -f deployments/deployment.yaml`
 
-5. Profit! After a short delay, you should start seeing your k8s state synced with your git repo
+5. Profit! After a short delay, you should start seeing your k8s state synced with your git repo (Take a look at the example repo: [here](https://github.com/nfons/deckhand-example) to view ops repo structure)
 
 6. Add Some new deployments, after a short delay, you will see that deployment also synced to your git repo
