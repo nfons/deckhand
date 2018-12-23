@@ -8,7 +8,7 @@ Kubernetes State saver for GitOps like functionality.
 Deck Hand is an application that will Save mutable kubernetes resources such as Deployments, StatefulSets, and DaemonSets.
 The objective is to save the current k8s mutable state to re-create a cluster in case of disaster.
 
-![General Architecture](https://i.imgur.com/12ybhUg.png)
+![General Architecture](https://i.imgur.com/jNPSMhE.png)
 
 ## ENV VARS
 The Application can be configured using env vars. Each ENV var is prefixed with DECK_*
