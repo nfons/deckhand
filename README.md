@@ -8,7 +8,7 @@ Kubernetes State saver for GitOps like functionality.
 Deck Hand is an application that will Save mutable kubernetes resources such as Deployments, StatefulSets, and DaemonSets.
 The objective is to save the current k8s mutable state to re-create a cluster in case of disaster.
 
-![General Architecture](https://i.imgur.com/12ybhUg.png)
+![General Architecture](https://i.imgur.com/jNPSMhE.png)
 
 ## ENV VARS
 The Application can be configured using env vars. Each ENV var is prefixed with DECK_*
@@ -19,7 +19,7 @@ Current ENV Vars:
 |---|---|---|---|---|
 |  GIT_REPO |  string | nil   | Y  | Git Repo you want to save states to   |
 |  SYNCINTERVAL | string   | 30s   | N  | Must be valid go time parse duration format  https://golang.org/pkg/time/#ParseDuration |
-|  CLUSTER_NAME | string  | dev  | N  |  cluster name you wnat to save under  |
+|  CLUSTER_NAME | string  | dev  | N  |  cluster name you want to save under  |
 | USE_REPLICA_SETS| bool | F | N |  If you want to save replica sets as well (not recommended) ||
 |SSH_KEY | string | nil | Y| SSH Private key you want to use to connect to git repo |
 
@@ -74,6 +74,7 @@ Note: Ensure Your `DECK_GIT_REPO` is the ssh format (i.e git@(yourhost)
 Ideally you would want to store the git username and password as secrets, but simplicity we will disregard that.
 
 3. Edit the deployment yaml file:
+
             apiVersion: apps/v1
             kind: Deployment
             metadata:
@@ -107,5 +108,6 @@ Ideally you would want to store the git username and password as secrets, but si
 
 4. `kubectl create -f deployments/deployment.yaml`
 
-5. Profit! After a short delay, you should start seeing your k8s state synced with your git repo
+5. Profit! After a short delay, you should start seeing your k8s state synced with your git repo (Take a look at the example repo: [here](https://github.com/nfons/deckhand-example) to view ops repo structure)
 
+6. Add Some new deployments, after a short delay, you will see that deployment also synced to your git repo
