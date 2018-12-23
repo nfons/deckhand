@@ -30,7 +30,7 @@ Current ENV Vars:
 
 We will assume you have a cluster running (like [minikube](https://kubernetes.io/docs/setup/minikube/) , or [docker-k8s](https://docs.docker.com/docker-for-mac/kubernetes/))
 
-A) #### If using SSH (recommended) for git:
+#### A) If using SSH (recommended) for git:
 1. Create and associate a SSH key for your git repo by following this guide [HERE](https://help.github.com/articles/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent/)
 2. Next Add that key  as a k8s secret:
 
@@ -70,7 +70,7 @@ A) #### If using SSH (recommended) for git:
     
 Note: Ensure Your `DECK_GIT_REPO` is the ssh format (i.e git@(yourhost)
 
-B) #### If using HTTPS:
+#### B) If using HTTPS:
 Ideally you would want to store the git username and password as secrets, but simplicity we will disregard that.
 
 3. Edit the deployment yaml file:
