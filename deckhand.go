@@ -8,15 +8,16 @@ import (
 	"gopkg.in/robfig/cron.v2"
 	"gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
+	"gopkg.in/src-d/go-git.v4/plumbing/transport"
+	http2 "gopkg.in/src-d/go-git.v4/plumbing/transport/http"
 	ssh2 "gopkg.in/src-d/go-git.v4/plumbing/transport/ssh"
-	"k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/clientcmd"
-
 	"io/ioutil"
 	"k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
 	"log"
 	"net/http"
 	"os"
@@ -30,7 +31,7 @@ const directory = "repo"
 
 var deck_config DeckConfig
 var createPath string
-var auth *ssh2.PublicKeys
+var auth transport.AuthMethod
 
 type DeckConfig struct {
 	GitRepo        string `envconfig:"GIT_REPO" required:"true"`
@@ -40,6 +41,8 @@ type DeckConfig struct {
 	SSH_KEY        string `envconfig:"SSH_KEY"`
 	KUBE_CONF      string `envconfig:"KUBE_CONF"`
 	STORE_ALL      bool   `envconfig:"STORE_ALL" default:"false"`
+	GitUser        string `split_words:"true"`
+	GitPassword    string `split_words:"true"`
 }
 
 func main() {
@@ -51,6 +54,7 @@ func main() {
 	}
 
 	// Allow the passing in of kubeconf as a env var..really only useful for running this via docker outside cluster
+	// We probably can get rid of this
 	if deck_config.KUBE_CONF != "" {
 		// create k8s conf path if it doesn't exist
 		if _, err := os.Stat(filepath.Join(os.Getenv("HOME"), ".kube")); os.IsNotExist(err) {
@@ -89,13 +93,17 @@ func main() {
 
 	// Clone the Git Repo, Currently Only SSH
 
-	// We might be able to pass this in via cmd line or env
-	sshkey := deck_config.SSH_KEY
-	signer, _ := ssh.ParsePrivateKey([]byte(sshkey))
-	auth = &ssh2.PublicKeys{User: "git", Signer: signer}
+	if deck_config.GitPassword == "" {
+		sshkey := deck_config.SSH_KEY
+		signer, _ := ssh.ParsePrivateKey([]byte(sshkey))
+		sshAuth := &ssh2.PublicKeys{User: "git", Signer: signer}
 
-	//needed for known_host error during docker runs
-	auth.HostKeyCallback = ssh.InsecureIgnoreHostKey()
+		//needed for known_host error during docker runs
+		sshAuth.HostKeyCallback = ssh.InsecureIgnoreHostKey()
+		auth = sshAuth
+	} else {
+		auth = &http2.BasicAuth{Username: deck_config.GitUser, Password: deck_config.GitPassword}
+	}
 
 	_, giterr := git.PlainClone(directory, false, &git.CloneOptions{
 		URL:      deck_config.GitRepo,
@@ -160,7 +168,7 @@ func gitPullMaster() {
 	if pullerr != nil {
 		errstr := pullerr.Error()
 		if errstr != "already up-to-date" {
-			log.Fatal(errstr)
+			log.Println(errstr)
 		}
 	}
 }

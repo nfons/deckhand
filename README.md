@@ -1,4 +1,4 @@
-# Deck Hand
+## Deck Hand
 [![Go Report Card](https://goreportcard.com/badge/github.com/nfons/deckhand)](https://goreportcard.com/report/github.com/nfons/deckhand)
 
 Kubernetes State saver for GitOps like functionality.
@@ -24,48 +24,88 @@ Current ENV Vars:
 |SSH_KEY | string | nil | Y| SSH Private key you want to use to connect to git repo |
 
 
+
+
 # Getting Started
 
-We will assume you have a cluster running (like minikube, or docker-k8s)
+We will assume you have a cluster running (like [minikube](https://kubernetes.io/docs/setup/minikube/) , or [docker-k8s](https://docs.docker.com/docker-for-mac/kubernetes/))
 
+#### If using SSH (recommended) for git:
 1. Create and associate a SSH key for your git repo by following this guide [HERE](https://help.github.com/articles/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent/)
 2. Next Add that key  as a k8s secret:
 
     `kubectl create secret git-ssh-key --from-file=[location if your ssh key private key]`
+    
 3. Edit the following `deployments/deployments.yaml` to fit your needs:
-
-        apiVersion: apps/v1
-        kind: Deployment
-        metadata:
-          name: deckhand
-          labels:
-            app: deckhand
-        spec:
-          replicas: 1
-          selector:
-            matchLabels:
-              app: deckhand
-          template:
+    
+            apiVersion: apps/v1
+            kind: Deployment
             metadata:
+              name: deckhand
               labels:
                 app: deckhand
             spec:
-              containers:
-                - name: deckhand
-                  image: nfons/deckhand:latest
-                  ports:
-                    - containerPort: 8080
-                  env:
-                    - name: DECK_GIT_REPO
-                      value: [[ YOUR SSH GIT REPO... i.e git@github.com:nfons/deckhand-example.git ]]
-                    - name: DECK_SSH_KEY
-                      valueFrom:
-                        secretKeyRef:
-                          name: git-ssh-key
-                          key: [[ NAME OF YOUR SSH KEY FILE ]]
+              replicas: 1
+              selector:
+                matchLabels:
+                  app: deckhand
+              template:
+                metadata:
+                  labels:
+                    app: deckhand
+                spec:
+                  containers:
+                    - name: deckhand
+                      image: nfons/deckhand:latest
+                      ports:
+                        - containerPort: 8080
+                      env:
+                        - name: DECK_GIT_REPO
+                          value: [[ YOUR SSH GIT REPO... i.e git@github.com:nfons/deckhand-example.git ]]
+                        - name: DECK_SSH_KEY
+                          valueFrom:
+                            secretKeyRef:
+                              name: git-ssh-key
+                              key: [[ NAME OF YOUR SSH KEY FILE ]]
+    
+Note: Ensure Your `DECK_GIT_REPO` is the ssh format (i.e git@(yourhost)
+
+#### If using HTTPS:
+Ideally you would want to store the git username and password as secrets, but simplicity we will disregard that.
+
+3. Edit the deployment yaml file:
+            apiVersion: apps/v1
+            kind: Deployment
+            metadata:
+              name: deckhand
+              labels:
+                app: deckhand
+            spec:
+              replicas: 1
+              selector:
+                matchLabels:
+                  app: deckhand
+              template:
+                metadata:
+                  labels:
+                    app: deckhand
+                spec:
+                  containers:
+                    - name: deckhand
+                      image: nfons/deckhand:latest
+                      ports:
+                        - containerPort: 8080
+                      env:
+                        - name: DECK_GIT_REPO
+                          value: [[ YOUR SSH GIT REPO... i.e git@github.com:nfons/deckhand-example.git ]]
+                        - name: DECK_GIT_USER
+                          value: [[ YOUR USER NAME ]]
+                        - name: DECK_GIT_PASSWORD
+                          value: [[ YOUR PASSWORD ]]
+                          
+---
 
 4. `kubectl create -f deployments/deployment.yaml`
 
 5. Profit! After a short delay, you should start seeing your k8s state synced with your git repo
-
 
