@@ -19,7 +19,7 @@ Current ENV Vars:
 |---|---|---|---|---|
 |  GIT_REPO |  string | nil   | Y  | Git Repo you want to save states to   |
 |  SYNCINTERVAL | string   | 30s   | N  | Must be valid go time parse duration format  https://golang.org/pkg/time/#ParseDuration |
-|  CLUSTER_NAME | string  | dev  | N  |  cluster name you wnat to save under  |
+|  CLUSTER_NAME | string  | dev  | N  |  cluster name you want to save under  |
 | USE_REPLICA_SETS| bool | F | N |  If you want to save replica sets as well (not recommended) ||
 |SSH_KEY | string | nil | Y| SSH Private key you want to use to connect to git repo |
 
@@ -68,4 +68,4 @@ We will assume you have a cluster running (like minikube, or docker-k8s)
 
 5. Profit! After a short delay, you should start seeing your k8s state synced with your git repo
 
-
+6. Add Some new deployments, after a short delay, you will see that deployment also synced to your git repo
