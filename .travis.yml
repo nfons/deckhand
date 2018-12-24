@@ -1,0 +1,27 @@
+language: go
+services:
+  - docker
+env:
+  - GO111MODULE=on
+go:
+  - "1.11.x"
+git:
+  depth: 1
+
+jobs:
+  include:
+    - stage: "install"
+      script: builds/install_deps.sh
+    - stage: "build"
+      name: "Build"
+      script: builds/build.sh
+    - stage: deploy
+      name: "Deploying docker image"
+      script: builds/docker_push
+
+stages:
+  - install
+  - build
+  - name: deploy
+    if: branch == master
+

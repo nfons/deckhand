@@ -42,7 +42,7 @@ We will assume you have a cluster running (like [minikube](https://kubernetes.io
 
     `kubectl create secret git-ssh-key --from-file=[location if your ssh key private key]`
     
-3. Edit the following `deployments/deployments.yaml` to fit your needs:
+3. Edit the following `builds/deployments.yaml` to fit your needs:
     
             apiVersion: apps/v1
             kind: Deployment
@@ -112,7 +112,7 @@ Ideally you would want to store the git username and password as secrets, but si
                           
 ---
 
-4. `kubectl create -f deployments/deployment.yaml`
+4. `kubectl create -f builds/deployment.yaml`
 
 5. Profit! After a short delay, you should start seeing your k8s state synced with your git repo (Take a look at the example repo: [here](https://github.com/nfons/deckhand-example) to view ops repo structure)
 
