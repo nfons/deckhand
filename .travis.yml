@@ -27,4 +27,4 @@ jobs:
 stages:
   - build
   - name: deploy
-    if: branch = master
+    if: branch = master OR tag IS present
