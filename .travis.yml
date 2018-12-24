@@ -26,10 +26,8 @@ jobs:
           - docker build -t deckhand .
           - docker tag deckhand quay.io/nfons/deckhand:$TRAVIS_BRANCH
           - docker push quay.io/nfons/deckhand:$TRAVIS_BRANCH
-        skip_cleanup: true
         on:
-          tags: true
-          branch: master
+          condition: $TRAVIS_BRANCH == "master" || -n $TRAVIS_TAG
           
        
 
