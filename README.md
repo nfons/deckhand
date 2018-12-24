@@ -1,14 +1,15 @@
-## Deck Hand
+# Deck Hand
+[![Build Status](https://travis-ci.org/nfons/deckhand.svg?branch=master)](https://travis-ci.org/nfons/deckhand)
 [![Go Report Card](https://goreportcard.com/badge/github.com/nfons/deckhand)](https://goreportcard.com/report/github.com/nfons/deckhand)
 [![License](https://img.shields.io/github/license/nfons/deckhand.svg)](https://github.com/nfons/deckhand/blob/master/LICENSE)
 [![Release](https://img.shields.io/github/release-pre/nfons/deckhand.svg)](https://github.com/nfons/deckhand/releases)
 [![GolangCI](https://golangci.com/badges/github.com/nfons/deckhand.svg)](https://golangci.com/badges/github.com/nfons/deckhand)
 [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fgo-swagger%2Fgo-swagger.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fgo-swagger%2Fgo-swagger?ref=badge_shield)
 [![Docker Repository on Quay](https://quay.io/repository/nfons/deckhand/status "Docker Repository on Quay")](https://quay.io/repository/nfons/deckhand)
-[![Build Status](https://travis-ci.org/nfons/deckhand.svg?branch=master)](https://travis-ci.org/nfons/deckhand)
-# What is it?
-Deck Hand is an application that will Save mutable kubernetes resources such as Deployments, StatefulSets, and DaemonSets.
-The objective is to save the current k8s mutable state to re-create a cluster in case of disaster.
+
+## What is it?
+Deck Hand is an application that will save mutable kubernetes resources states such as Deployments, StatefulSets, and DaemonSets into kubectl compliant files to a git repo.
+The objective is to save the current k8s mutable state to re-create a cluster in case of disaster, replication or any other need.
 
 ![General Architecture](https://i.imgur.com/jNPSMhE.png)
 
@@ -117,3 +118,21 @@ Ideally you would want to store the git username and password as secrets, but si
 5. Profit! After a short delay, you should start seeing your k8s state synced with your git repo (Take a look at the example repo: [here](https://github.com/nfons/deckhand-example) to view ops repo structure)
 
 6. Add Some new deployments, after a short delay, you will see that deployment also synced to your git repo
+
+# Why is K8s the source of truth instead of Git Repo?
+DeckHands approach is to assume k8s as the source of truth. Traditional
+GitOps (or rather most common) assumes Git repo to be the source of
+truth.
+
+![From Weave gitops](https://i.imgur.com/UAgBM0i.png)
+
+
+**This approach has some draw backs for certain teams:**
+
+- Current CI/CD pipelines need to be altered to be based on the config
+  updating logic
+- Need pipelines for all resources. even one-off resources like a vendor deployment
+
+- False source of truth. If resources get updated outside of pipeline
+  (i.e via developer kubectl) resource state in k8s defers from git repo
+

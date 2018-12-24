@@ -10,12 +10,11 @@ git:
 
 jobs:
   include:
-    - stage: "install"
-      script: builds/install_deps.sh
     - stage: "build"
       name: "Build"
       script: builds/build.sh
     - stage: deploy
+      install: skip
       name: "Deploying docker image"
       script: builds/docker_push.sh
 
