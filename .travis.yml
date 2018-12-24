@@ -12,11 +12,17 @@ jobs:
   include:
     - stage: "build"
       name: "Build"
-      script: builds/build.sh
+      script:
+        - go build -o deckhand
     - stage: deploy
       install: skip
       name: "Deploying docker image"
-      script: builds/docker_push.sh
+      script:
+        - echo "Logging into Docker"
+        - docker login -u=$DOCKER_USER -p=$DOCKER_PASS quay.io
+        - docker build -t deckhand .
+        - docker tag deckhand quay.io/nfons/deckhand:$TRAVIS_BRANCH
+        - docker push quay.io/nfons/deckhand:$TRAVIS_BRANCH
 
 stages:
   - install
