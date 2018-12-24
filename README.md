@@ -3,6 +3,7 @@
 [![License](https://img.shields.io/github/license/nfons/deckhand.svg)](https://github.com/nfons/deckhand/blob/master/LICENSE)
 [![Release](https://img.shields.io/github/release-pre/nfons/deckhand.svg)](https://github.com/nfons/deckhand/releases)
 [![GolangCI](https://golangci.com/badges/github.com/nfons/deckhand.svg)](https://golangci.com/badges/github.com/nfons/deckhand)
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fgo-swagger%2Fgo-swagger.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fgo-swagger%2Fgo-swagger?ref=badge_shield)
 
 # What is it?
 Deck Hand is an application that will Save mutable kubernetes resources such as Deployments, StatefulSets, and DaemonSets.
