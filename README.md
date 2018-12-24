@@ -24,11 +24,11 @@ Current ENV Vars:
 | ENV Var Name  | Type  |  Default | Required  |  Comment |
 |---|---|---|---|---|
 |  DECK_GIT_REPO |  string | nil   | ✔  | Git Repo you want to save states to   |
-|  DECK_SYNCINTERVAL | string   | 30s   | X  | Must be valid go time parse duration format  https://golang.org/pkg/time/#ParseDuration |
-|  DECK_CLUSTER_NAME | string  | dev  | X  |  cluster name you want to save under  |
-| DECK_USE_REPLICA_SETS| bool | F | X |  If you want to save replica sets as well (not recommended) ||
+|  DECK_SYNCINTERVAL | string   | 30s   | ❌  | Must be valid go time parse duration format  https://golang.org/pkg/time/#ParseDuration |
+|  DECK_CLUSTER_NAME | string  | dev  | ❌  |  cluster name you want to save under  |
+| DECK_USE_REPLICA_SETS| bool | F | ❌ |  If you want to save replica sets as well (not recommended) ||
 |DECK_SSH_KEY | string | nil | ✔ (sort of) | SSH Private key you want to use to connect to git repo |
-|DECK_GIT_USER| string| nil | X | Git username you will use if using https git|
+|DECK_GIT_USER| string| nil | ❌ | Git username you will use if using https git|
 |DECK_GIT_PASSWORD|string|nil|✔ (sort of) | Git password if using https git|
 
 
