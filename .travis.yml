@@ -17,22 +17,14 @@ jobs:
     - stage: deploy
       install: skip
       name: "Deploying docker image"
-      script: skip
-      deploy:
-        provider: script
-        script:
-          - echo "Logging into Docker"
-          - docker login -u=$DOCKER_USER -p=$DOCKER_PASS quay.io
-          - docker build -t deckhand .
-          - docker tag deckhand quay.io/nfons/deckhand:$TRAVIS_BRANCH
-          - docker push quay.io/nfons/deckhand:$TRAVIS_BRANCH
-        on:
-          condition: $TRAVIS_BRANCH == "master" || -n $TRAVIS_TAG
-          
-       
+      script:
+        - echo "Logging into Docker"
+        - docker login -u=$DOCKER_USER -p=$DOCKER_PASS quay.io
+        - docker build -t deckhand .
+        - docker tag deckhand quay.io/nfons/deckhand:$TRAVIS_BRANCH
+        - docker push quay.io/nfons/deckhand:$TRAVIS_BRANCH
 
 stages:
-  - install
   - build
   - name: deploy
-
+    if: branch = master AND tag IS present
