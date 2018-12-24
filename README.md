@@ -1,7 +1,7 @@
 ## Deck Hand
 [![Go Report Card](https://goreportcard.com/badge/github.com/nfons/deckhand)](https://goreportcard.com/report/github.com/nfons/deckhand)
-[![](https://img.shields.io/github/license/nfons/deckhand.svg)](https://github.com/nfons/deckhand/blob/master/LICENSE)
-[![GitHub version](https://badge.fury.io/gh/nfons%2Fdeckhand.svg)](https://badge.fury.io/gh/nfons%2Fdeckhand)
+[![License](https://img.shields.io/github/license/nfons/deckhand.svg)](https://github.com/nfons/deckhand/blob/master/LICENSE)
+[![Release](https://img.shields.io/github/release-pre/nfons/deckhand.svg)](https://github.com/nfons/deckhand/releases)
 [![GolangCI](https://golangci.com/badges/github.com/nfons/deckhand.svg)](https://golangci.com/badges/github.com/nfons/deckhand)
 
 # What is it?
