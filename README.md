@@ -1,5 +1,6 @@
 ## Deck Hand
 [![Go Report Card](https://goreportcard.com/badge/github.com/nfons/deckhand)](https://goreportcard.com/report/github.com/nfons/deckhand)
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fnfons%2Fdeckhand.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fnfons%2Fdeckhand?ref=badge_shield)
 [![](https://img.shields.io/github/license/nfons/deckhand.svg)](https://github.com/nfons/deckhand/blob/master/LICENSE)
 [![GitHub version](https://badge.fury.io/gh/nfons%2Fdeckhand.svg)](https://badge.fury.io/gh/nfons%2Fdeckhand)
 
@@ -116,3 +117,7 @@ Ideally you would want to store the git username and password as secrets, but si
 5. Profit! After a short delay, you should start seeing your k8s state synced with your git repo (Take a look at the example repo: [here](https://github.com/nfons/deckhand-example) to view ops repo structure)
 
 6. Add Some new deployments, after a short delay, you will see that deployment also synced to your git repo
+
+
+## License
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fnfons%2Fdeckhand.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fnfons%2Fdeckhand?ref=badge_large)
