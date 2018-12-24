@@ -17,7 +17,7 @@ jobs:
       script: builds/build.sh
     - stage: deploy
       name: "Deploying docker image"
-      script: builds/docker_push
+      script: builds/docker_push.sh
 
 stages:
   - install
