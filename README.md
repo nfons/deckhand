@@ -5,7 +5,7 @@
 [![GolangCI](https://golangci.com/badges/github.com/nfons/deckhand.svg)](https://golangci.com/badges/github.com/nfons/deckhand)
 [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fgo-swagger%2Fgo-swagger.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fgo-swagger%2Fgo-swagger?ref=badge_shield)
 [![Docker Repository on Quay](https://quay.io/repository/nfons/deckhand/status "Docker Repository on Quay")](https://quay.io/repository/nfons/deckhand)
-
+[![Build Status](https://travis-ci.org/nfons/deckhand.svg?branch=master)](https://travis-ci.org/nfons/deckhand)
 # What is it?
 Deck Hand is an application that will Save mutable kubernetes resources such as Deployments, StatefulSets, and DaemonSets.
 The objective is to save the current k8s mutable state to re-create a cluster in case of disaster.
