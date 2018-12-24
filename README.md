@@ -4,6 +4,7 @@
 [![Release](https://img.shields.io/github/release-pre/nfons/deckhand.svg)](https://github.com/nfons/deckhand/releases)
 [![GolangCI](https://golangci.com/badges/github.com/nfons/deckhand.svg)](https://golangci.com/badges/github.com/nfons/deckhand)
 [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fgo-swagger%2Fgo-swagger.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fgo-swagger%2Fgo-swagger?ref=badge_shield)
+[![Docker Repository on Quay](https://quay.io/repository/nfons/deckhand/status "Docker Repository on Quay")](https://quay.io/repository/nfons/deckhand)
 
 # What is it?
 Deck Hand is an application that will Save mutable kubernetes resources such as Deployments, StatefulSets, and DaemonSets.
@@ -29,7 +30,6 @@ Current ENV Vars:
 |DECK_SSH_KEY | string | nil | ✔ (sort of) | SSH Private key you want to use to connect to git repo |
 |DECK_GIT_USER| string| nil | X | Git username you will use if using https git|
 |DECK_GIT_PASSWORD|string|nil|✔ (sort of) | Git password if using https git|
-[![Docker Repository on Quay](https://quay.io/repository/nfons/deckhand/status "Docker Repository on Quay")](https://quay.io/repository/nfons/deckhand)
 
 
 # Getting Started
