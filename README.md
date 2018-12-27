@@ -1,5 +1,5 @@
 # Deck Hand
-[![Build Status](https://travis-ci.org/nfons/deckhand.svg?branch=master)](https://travis-ci.org/nfons/deckhand)
+[![Build Status](https://travis-ci.com/nfons/deckhand.svg?branch=master)](https://travis-ci.com/nfons/deckhand)
 [![Go Report Card](https://goreportcard.com/badge/github.com/nfons/deckhand)](https://goreportcard.com/report/github.com/nfons/deckhand)
 [![License](https://img.shields.io/github/license/nfons/deckhand.svg)](https://github.com/nfons/deckhand/blob/master/LICENSE)
 [![Release](https://img.shields.io/github/release-pre/nfons/deckhand.svg)](https://github.com/nfons/deckhand/releases)
