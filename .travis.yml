@@ -21,8 +21,8 @@ jobs:
         - echo "Logging into Docker"
         - docker login -u=$DOCKER_USER -p=$DOCKER_PASS quay.io
         - docker build -t deckhand .
-        - docker tag deckhand quay.io/nfons/deckhand:$TRAVIS_BRANCH
-        - docker push quay.io/nfons/deckhand:$TRAVIS_BRANCH
+        - builds/deploy.sh
+
 
 stages:
   - build
