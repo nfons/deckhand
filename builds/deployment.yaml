@@ -16,14 +16,18 @@ spec:
     spec:
       containers:
         - name: deckhand
-          image: nfons/deckhand:latest
+          image: quay.io/nfons/deckhand
           ports:
             - containerPort: 8080
           env:
             - name: DECK_GIT_REPO
-              value: [[ YOUR REPO ]]
-            - name: DECK_SSH_KEY
+              value: https://github.nike.com/zodiacmetrics/gitOps.git
+            - name: DECK_GIT_USER
+              value: nfons2 # Need to get a dummy one for this later
+            - name: DECK_GIT_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: git-ssh-key
-                  key: [[ SECRET KEY ]]
+                  name: github-access-token
+                  key: accessToken
+            - name: DECK_CLUSTER_NAME
+              value: dev

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"fmt"
 	"github.com/ghodss/yaml" // this is better than regular yaml
 	"github.com/kelseyhightower/envconfig"
@@ -9,6 +10,7 @@ import (
 	"gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
 	"gopkg.in/src-d/go-git.v4/plumbing/transport"
+	"gopkg.in/src-d/go-git.v4/plumbing/transport/client"
 	http2 "gopkg.in/src-d/go-git.v4/plumbing/transport/http"
 	ssh2 "gopkg.in/src-d/go-git.v4/plumbing/transport/ssh"
 	"io/ioutil"
@@ -91,7 +93,7 @@ func main() {
 
 	createPath = filepath.Join(directory, "state", deck_config.ClusterName)
 
-	// Clone the Git Repo, Currently Only SSH
+	// Clone the Git Repo
 
 	if deck_config.GitPassword == "" {
 		sshkey := deck_config.SSH_KEY
@@ -102,6 +104,19 @@ func main() {
 		sshAuth.HostKeyCallback = ssh.InsecureIgnoreHostKey()
 		auth = sshAuth
 	} else {
+
+		// Get a custom client
+		customClient := &http.Client{
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+			},
+			Timeout: 15 * time.Second, // 15 second timeout
+			CheckRedirect: func(req *http.Request, via []*http.Request) error { // don't follow redirect
+				return http.ErrUseLastResponse
+			},
+		}
+		client.InstallProtocol("https", http2.NewClient(customClient))
+
 		auth = &http2.BasicAuth{Username: deck_config.GitUser, Password: deck_config.GitPassword}
 	}
 
