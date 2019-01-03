@@ -279,13 +279,13 @@ func GetKubernetesState(createPath string) {
 		marshaleYaml, err := yaml.Marshal(namespace)
 
 		if err != nil {
-			log.Fatal(err)
+			log.Println(err)
 		}
 
 		writeErr := ioutil.WriteFile(yamlName, marshaleYaml, 0644)
 
 		if writeErr != nil {
-			log.Fatal(writeErr)
+			log.Println(writeErr)
 		}
 
 		// save deployments
