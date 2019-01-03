@@ -59,7 +59,6 @@ func getResourceInfo(obj interface{}) (string, string, string) {
 	switch val := obj.(type) {
 	default:
 		log.Panic("unknown type in deletion")
-		log.Fatal(val)
 	case *v1.DaemonSet:
 		return val.Name, "daemonset", val.Namespace
 	case *v1.StatefulSet:
@@ -74,6 +73,7 @@ func getResourceInfo(obj interface{}) (string, string, string) {
 
 func ResourceDeleted(obj interface{}) {
 	name, rtype, namespace := getResourceInfo(obj)
+	log.Println("Resource Deleted")
 	filename := fmt.Sprintf("%s.%s.yaml", name, rtype)
 	file := filepath.Join(createPath, namespace, filename)
 	if name != "" {
