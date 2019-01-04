@@ -3,18 +3,27 @@ package main
 import (
 	"fmt"
 	"k8s.io/api/apps/v1"
+	v1core "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/kubernetes/pkg/apis/core"
 	"log"
 	"path/filepath"
-	"reflect"
 )
 
 func WatchList(resource string, resourceType runtime.Object) cache.Controller {
-	watchlist := cache.NewListWatchFromClient(clientset.AppsV1().RESTClient(), resource, core.NamespaceAll, fields.Everything())
+	var restInterface rest.Interface
+	switch resourceType.(type) {
+	default:
+		restInterface = clientset.AppsV1().RESTClient()
+	case *v1core.Service, *v1core.Secret, *v1core.ConfigMap:
+		restInterface = clientset.CoreV1().RESTClient()
+
+	}
+	watchlist := cache.NewListWatchFromClient(restInterface, resource, core.NamespaceAll, fields.Everything())
 	_, controller := cache.NewInformer(
 		watchlist,
 		resourceType,
@@ -42,9 +51,11 @@ func WatchApis() {
 		go WatchList("relicasets", &v1.ReplicaSet{}).Run(wait.NeverStop)
 	}
 
-	// Only get Secrets, Config Maps, Services, Ingress only if its added
+	// Only get Secrets, Config Maps, Services only if store_all is set
 	if deck_config.STORE_ALL == true {
-		//  TODO
+		go WatchList(string(v1core.ResourceServices), &v1core.Service{}).Run(wait.NeverStop)
+		go WatchList("secrets", &v1core.Secret{}).Run(wait.NeverStop)
+		go WatchList(string(v1core.ResourceConfigMaps), &v1core.ConfigMap{}).Run(wait.NeverStop)
 	}
 
 	// IDK if I need all these
@@ -67,6 +78,10 @@ func getResourceInfo(obj interface{}) (string, string, string) {
 		return val.Name, "deployment", val.Namespace
 	case *v1.ReplicaSet:
 		return val.Name, "replicaset", val.Namespace
+	case *v1core.Service:
+		return val.Name, "service", val.Namespace
+	case *v1core.Secret:
+		return val.Name, "secret", val.Namespace
 	}
 	return "", "", ""
 }
@@ -82,64 +97,13 @@ func ResourceDeleted(obj interface{}) {
 }
 
 func ResourceAdded(obj interface{}) {
-	switch val := obj.(type) {
-	default:
-		log.Panic("Unknown Type: ")
-		log.Println(val)
-		return
-	case *v1.Deployment:
-		log.Println("Deployment Added " + val.Name)
-		namespacePath := filepath.Join(createPath, val.Namespace)
-		SaveDeploy(*val, namespacePath)
-	case *v1.ReplicaSet:
-		if deck_config.UseReplicaSets == true {
-			namespacePath := filepath.Join(createPath, val.Namespace)
-			SaveRS(*val, namespacePath)
-		}
-	case *v1.DaemonSet:
-		log.Println("DaemonSet Added " + val.Name)
-		namespacePath := filepath.Join(createPath, val.Namespace)
-		SaveDS(*val, namespacePath)
-	case *v1.StatefulSet:
-		log.Println("Satefulset Added " + val.Name)
-		namespacePath := filepath.Join(createPath, val.Namespace)
-		SaveSS(*val, namespacePath)
-	}
+	log.Println("Resource Added")
+	SaveResource(obj)
 }
 
 func ResourceUpdated(old interface{}, obj interface{}) {
 	// Because syncs also call updatefunc we will need to do this
 	// create kctl deployment struct
-
-	switch val := obj.(type) {
-	default:
-		log.Panic("Unknown Type: ")
-		log.Println(val)
-		return
-	case *v1.Deployment:
-		if reflect.DeepEqual(old, obj) == false {
-			log.Println("Deployment Updated " + val.Name)
-			namespacePath := filepath.Join(createPath, val.Namespace)
-			SaveDeploy(*val, namespacePath)
-		}
-	case *v1.ReplicaSet:
-		if deck_config.UseReplicaSets == true {
-			if reflect.DeepEqual(old, obj) == false {
-				namespacePath := filepath.Join(createPath, val.Namespace)
-				SaveRS(*val, namespacePath)
-			}
-		}
-	case *v1.DaemonSet:
-		if reflect.DeepEqual(obj, old) == false {
-			log.Println("Daemonset Updated " + val.Name)
-			namespacePath := filepath.Join(createPath, val.Namespace)
-			SaveDS(*val, namespacePath)
-		}
-	case *v1.StatefulSet:
-		if reflect.DeepEqual(old, obj) == false {
-			log.Println("Statefulset Updated " + val.Name)
-			namespacePath := filepath.Join(createPath, val.Namespace)
-			SaveSS(*val, namespacePath)
-		}
-	}
+	log.Println("Resource Updated")
+	SaveResource(obj)
 }
