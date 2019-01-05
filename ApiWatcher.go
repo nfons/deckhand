@@ -71,17 +71,19 @@ func getResourceInfo(obj interface{}) (string, string, string) {
 	default:
 		log.Panic("unknown type in deletion")
 	case *v1.DaemonSet:
-		return val.Name, "daemonset", val.Namespace
+		return val.Name, "DaemonSet", val.Namespace
 	case *v1.StatefulSet:
-		return val.Name, "statefulset", val.Namespace
+		return val.Name, "StatefulSet", val.Namespace
 	case *v1.Deployment:
-		return val.Name, "deployment", val.Namespace
+		return val.Name, "Deployment", val.Namespace
 	case *v1.ReplicaSet:
-		return val.Name, "replicaset", val.Namespace
+		return val.Name, "ReplicaSet", val.Namespace
 	case *v1core.Service:
-		return val.Name, "service", val.Namespace
+		return val.Name, "Service", val.Namespace
 	case *v1core.Secret:
-		return val.Name, "secret", val.Namespace
+		return val.Name, "Secret", val.Namespace
+	case *v1core.ConfigMap:
+		return val.Name, "ConfigMap", val.Namespace
 	}
 	return "", "", ""
 }

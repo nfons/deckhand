@@ -49,6 +49,11 @@ type DeckConfig struct {
 
 func main() {
 
+	// Set Up
+	log.SetFormatter(&log.TextFormatter{
+		DisableColors: false,
+		FullTimestamp: true,
+	})
 	kubeconfig := filepath.Join(os.Getenv("HOME"), ".kube", "config")
 	enverr := envconfig.Process("deck", &deck_config)
 	if enverr != nil {
@@ -139,13 +144,13 @@ func main() {
 		os.MkdirAll(createPath, 0777)
 	} else {
 		// this path exists...But it could be old, so we need to delete that whole dir
-		log.Println("Flushing old repo files")
+		log.Info("Flushing old repo files")
 		os.RemoveAll(createPath + "/")
 		os.MkdirAll(createPath, 0777)
 	}
 
 	// on init, get k8s state, this will get the latest
-	log.Println("Syncing initial K8s State")
+	log.Info("Syncing initial K8s State")
 	GetKubernetesState(createPath)
 
 	/*
