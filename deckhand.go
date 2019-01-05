@@ -276,7 +276,9 @@ func GetKubernetesState(createPath string) {
 
 		// create the namespace path if it doesn't exist
 		if _, exist := os.Stat(namespacePath); os.IsNotExist(exist) {
-			os.MkdirAll(filepath.Join(namespacePath), 0777)
+			if os.MkdirAll(filepath.Join(namespacePath), 0777) != nil {
+				log.Fatal("Can't recreate namespace path")
+			}
 		}
 
 		// save the namespace as well
