@@ -145,8 +145,12 @@ func main() {
 	} else {
 		// this path exists...But it could be old, so we need to delete that whole dir
 		log.Info("Flushing old repo files")
-		os.RemoveAll(createPath + "/")
-		os.MkdirAll(createPath, 0777)
+		if os.RemoveAll(createPath+"/") != nil {
+			log.Fatal("Could not clear old dir struct")
+		}
+		if os.MkdirAll(createPath, 0777) != nil {
+			log.Fatal("Could not recreate dir struct after flusing")
+		}
 	}
 
 	// on init, get k8s state, this will get the latest
