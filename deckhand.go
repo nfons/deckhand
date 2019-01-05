@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/ghodss/yaml" // this is better than regular yaml
 	"github.com/kelseyhightower/envconfig"
+	log "github.com/sirupsen/logrus"
 	"golang.org/x/crypto/ssh"
 	"gopkg.in/robfig/cron.v2"
 	"gopkg.in/src-d/go-git.v4"
@@ -20,7 +21,6 @@ import (
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
-	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -49,6 +49,11 @@ type DeckConfig struct {
 
 func main() {
 
+	// Set Up
+	log.SetFormatter(&log.TextFormatter{
+		DisableColors: false,
+		FullTimestamp: true,
+	})
 	kubeconfig := filepath.Join(os.Getenv("HOME"), ".kube", "config")
 	enverr := envconfig.Process("deck", &deck_config)
 	if enverr != nil {
@@ -87,9 +92,9 @@ func main() {
 	clientset, err = kubernetes.NewForConfig(config)
 
 	// Debugging for log purposes
-	log.Println("Using Git Repo: " + deck_config.GitRepo)
-	log.Println("Setting Cluster Name as: " + deck_config.ClusterName)
-	log.Println("Setting Resync Interval at: " + deck_config.SyncInterval)
+	log.Info("Using Git Repo: " + deck_config.GitRepo)
+	log.Info("Setting Cluster Name as: " + deck_config.ClusterName)
+	log.Info("Setting Resync Interval at: " + deck_config.SyncInterval)
 
 	createPath = filepath.Join(directory, "state", deck_config.ClusterName)
 
@@ -100,7 +105,7 @@ func main() {
 		signer, _ := ssh.ParsePrivateKey([]byte(sshkey))
 		sshAuth := &ssh2.PublicKeys{User: "git", Signer: signer}
 
-		//needed for known_host error during docker runs
+		// needed for known_host error during docker runs
 		sshAuth.HostKeyCallback = ssh.InsecureIgnoreHostKey()
 		auth = sshAuth
 	} else {
@@ -137,10 +142,15 @@ func main() {
 	if _, err := os.Stat(createPath); os.IsNotExist(err) {
 		// need to create this path
 		os.MkdirAll(createPath, 0777)
+	} else {
+		// this path exists...But it could be old, so we need to delete that whole dir
+		log.Info("Flushing old repo files")
+		os.RemoveAll(createPath + "/")
+		os.MkdirAll(createPath, 0777)
 	}
 
 	// on init, get k8s state, this will get the latest
-	log.Println("Syncing initial K8s State")
+	log.Info("Syncing initial K8s State")
 	GetKubernetesState(createPath)
 
 	/*
@@ -238,10 +248,10 @@ func gitPushMaster() {
 	})
 
 	CheckIfError(err)
+	log.Println("Pushing Changes to Git Repo")
 }
 
 // This function is the one that does the heavy lifting and actually gets the k8s state
-// It is currently called on a Cron timer
 func GetKubernetesState(createPath string) {
 	namespaces, err := clientset.CoreV1().Namespaces().List(metav1.ListOptions{})
 
@@ -251,11 +261,11 @@ func GetKubernetesState(createPath string) {
 	// for each namespace, we will iterate and get deployments
 	for _, val := range namespaces.Items {
 		log.Printf("Getting State of Namespace: " + val.Name)
-		Deployments, err := clientset.AppsV1().Deployments(val.Name).List(metav1.ListOptions{})
-		// we should probably also get rs, ss, and ds as those would change as well.
-		// we will get them, but leave them blank for now
-		DaemonSets, _ := clientset.AppsV1().DaemonSets(val.Name).List(metav1.ListOptions{})
-		StatefulSets, _ := clientset.AppsV1().StatefulSets(val.Name).List(metav1.ListOptions{})
+		// Deployments, err := clientset.AppsV1().Deployments(val.Name).List(metav1.ListOptions{})
+		// // // we should probably also get rs, ss, and ds as those would change as well.
+		// // // we will get them, but leave them blank for now
+		// DaemonSets, _ := clientset.AppsV1().DaemonSets(val.Name).List(metav1.ListOptions{})
+		// StatefulSets, _ := clientset.AppsV1().StatefulSets(val.Name).List(metav1.ListOptions{})
 
 		if err != nil {
 			log.Fatal(err)
@@ -266,7 +276,9 @@ func GetKubernetesState(createPath string) {
 
 		// create the namespace path if it doesn't exist
 		if _, exist := os.Stat(namespacePath); os.IsNotExist(exist) {
-			os.MkdirAll(filepath.Join(namespacePath), 0777)
+			if os.MkdirAll(filepath.Join(namespacePath), 0777) != nil {
+				log.Fatal("Can't recreate namespace path")
+			}
 		}
 
 		// save the namespace as well
@@ -288,13 +300,13 @@ func GetKubernetesState(createPath string) {
 			log.Println(writeErr)
 		}
 
-		// save deployments
-		SaveDeployments(Deployments.Items, namespacePath)
-
-		// save statefulsets
-		SaveStatefulset(StatefulSets.Items, namespacePath)
-
-		SaveDaeomonSet(DaemonSets.Items, namespacePath)
+		// // save deployments
+		// SaveDeployments(Deployments.Items, namespacePath)
+		//
+		// // save statefulsets
+		// SaveStatefulset(StatefulSets.Items, namespacePath)
+		//
+		// SaveDaeomonSet(DaemonSets.Items, namespacePath)
 
 		// Commenting out RS, since Deployments are just higher level RS
 		if deck_config.UseReplicaSets == true {
@@ -312,7 +324,7 @@ func GetKubernetesState(createPath string) {
 func SaveDeployments(Deployments []v1.Deployment, path string) {
 	// loop through each deployment and create a a deployment yaml
 	for _, deploy := range Deployments {
-		SaveDeploy(deploy, path)
+		SaveResource(deploy)
 	}
 }
 
@@ -323,20 +335,20 @@ func SaveDeployments(Deployments []v1.Deployment, path string) {
 func SaveStatefulset(StatefulSets []v1.StatefulSet, path string) {
 	// loop through each SS and create a a deployment yaml
 	for _, deploy := range StatefulSets {
-		SaveSS(deploy, path)
+		SaveResource(deploy)
 	}
 }
 
 func SaveDaeomonSet(daeomonset []v1.DaemonSet, path string) {
 	// loop through each DS and create a a deployment yaml
 	for _, deploy := range daeomonset {
-		SaveDS(deploy, path)
+		SaveResource(deploy)
 	}
 }
 
 func SaveReplicaSets(rcs []v1.ReplicaSet, path string) {
 	// loop through each RS and create a a deployment yaml
 	for _, deploy := range rcs {
-		SaveRS(deploy, path)
+		SaveResource(deploy)
 	}
 }

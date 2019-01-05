@@ -10,4 +10,6 @@ type KubeStruct struct {
 	Kind       string        `json:"kind"`
 	Metadata   v1.ObjectMeta `json:"metadata,omitempty"`
 	Spec       interface{}   `json:"spec,omitempty"`
+	Type       string        `json:"type,omitempty"`
+	Data       interface{}   `json:"data,omitempty"`
 }
