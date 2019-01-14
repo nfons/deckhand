@@ -15,7 +15,6 @@ import (
 	http2 "gopkg.in/src-d/go-git.v4/plumbing/transport/http"
 	ssh2 "gopkg.in/src-d/go-git.v4/plumbing/transport/ssh"
 	"io/ioutil"
-	"k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
@@ -174,6 +173,7 @@ func main() {
 func sync() {
 	gitPullMaster()
 	if gitStatusCheck() == false {
+		log.Info("Status is dirty, Pushing new state to repo")
 		gitPushMaster()
 	} else {
 		log.Println(" Status is clean, skipping push")
@@ -230,6 +230,10 @@ func gitPushMaster() {
 
 	for key := range status {
 		worktree.Add(key)
+	}
+	if len(status) == 0 {
+		log.Error("Status len of 0 was returned as clean: %s", status.IsClean())
+		return
 	}
 
 	// Commit the current state to git
@@ -304,55 +308,6 @@ func GetKubernetesState(createPath string) {
 			log.Println(writeErr)
 		}
 
-		// // save deployments
-		// SaveDeployments(Deployments.Items, namespacePath)
-		//
-		// // save statefulsets
-		// SaveStatefulset(StatefulSets.Items, namespacePath)
-		//
-		// SaveDaeomonSet(DaemonSets.Items, namespacePath)
-
-		// Commenting out RS, since Deployments are just higher level RS
-		if deck_config.UseReplicaSets == true {
-			ReplicaSets, _ := clientset.AppsV1().ReplicaSets(val.Name).List(metav1.ListOptions{})
-			SaveReplicaSets(ReplicaSets.Items, namespacePath)
-		}
-
 	}
 
-}
-
-/*
-	Iterate through the deployments and save them to a file
-*/
-func SaveDeployments(Deployments []v1.Deployment, path string) {
-	// loop through each deployment and create a a deployment yaml
-	for _, deploy := range Deployments {
-		SaveResource(deploy)
-	}
-}
-
-/*
-	Iterate through the deployments and save them to a file
-
-*/
-func SaveStatefulset(StatefulSets []v1.StatefulSet, path string) {
-	// loop through each SS and create a a deployment yaml
-	for _, deploy := range StatefulSets {
-		SaveResource(deploy)
-	}
-}
-
-func SaveDaeomonSet(daeomonset []v1.DaemonSet, path string) {
-	// loop through each DS and create a a deployment yaml
-	for _, deploy := range daeomonset {
-		SaveResource(deploy)
-	}
-}
-
-func SaveReplicaSets(rcs []v1.ReplicaSet, path string) {
-	// loop through each RS and create a a deployment yaml
-	for _, deploy := range rcs {
-		SaveResource(deploy)
-	}
 }
