@@ -197,7 +197,7 @@ func gitPullMaster() {
 	if pullerr != nil {
 		errstr := pullerr.Error()
 		if errstr != "already up-to-date" {
-			log.Println(errstr)
+			log.Info(errstr)
 		}
 	}
 }
@@ -256,7 +256,7 @@ func gitPushMaster() {
 	})
 
 	CheckIfError(err)
-	log.Println("Pushing Changes to Git Repo")
+	log.Info("Pushing Changes to Git Repo")
 }
 
 // This function is the one that does the heavy lifting and actually gets the k8s state
