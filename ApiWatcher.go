@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	"k8s.io/api/apps/v1"
 	v1core "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/fields"
@@ -10,7 +11,6 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/kubernetes/pkg/apis/core"
-	"log"
 	"path/filepath"
 )
 
@@ -99,13 +99,13 @@ func ResourceDeleted(obj interface{}) {
 }
 
 func ResourceAdded(obj interface{}) {
-	log.Println("Resource Added")
+	log.Debug("Resource Added")
 	SaveResource(obj)
 }
 
 func ResourceUpdated(old interface{}, obj interface{}) {
 	// Because syncs also call updatefunc we will need to do this
 	// create kctl deployment struct
-	log.Println("Resource Updated")
+	log.Debug("Resource Updated")
 	SaveResource(obj)
 }

@@ -3,9 +3,9 @@ package main
 import (
 	"fmt"
 	"github.com/ghodss/yaml"
+	log "github.com/sirupsen/logrus"
 	"k8s.io/api/apps/v1"
 	v1core "k8s.io/api/core/v1"
-	"log"
 	"path/filepath"
 	"reflect"
 )
@@ -70,7 +70,7 @@ func SaveResource(obj interface{}) {
 	if err != nil {
 		log.Panic(err)
 	}
-	fmt.Println("Saving:", resource.Kind, resource.Metadata.Name)
+	log.Debug("Saving:", resource.Kind, resource.Metadata.Name)
 	saveFile(marshalYaml, yamlName)
 
 }
