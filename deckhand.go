@@ -232,8 +232,13 @@ func gitPushMaster() {
 		worktree.Add(key)
 	}
 	if len(status) == 0 {
-		log.Error("Status len of 0 was returned as clean: %s", status.IsClean())
+		log.Error("Status len of 0 was returned as clean: ", status.IsClean())
 		return
+	} else {
+		log.Info("Changes detected in files:")
+		for key := range status {
+			log.Info(key)
+		}
 	}
 
 	// Commit the current state to git
@@ -256,7 +261,7 @@ func gitPushMaster() {
 	})
 
 	CheckIfError(err)
-	log.Info("Pushing Changes to Git Repo")
+	log.Info("Latest changes pushed to repo")
 }
 
 // This function is the one that does the heavy lifting and actually gets the k8s state

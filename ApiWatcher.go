@@ -11,6 +11,7 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/kubernetes/pkg/apis/core"
+	"os"
 	"path/filepath"
 )
 
@@ -63,6 +64,17 @@ func WatchApis() {
 	go controllerSS.Run(wait.NeverStop)
 	go controllerDS.Run(wait.NeverStop)
 
+	// Watch for namespaces are different
+	namespaceList := cache.NewListWatchFromClient(clientset.CoreV1().RESTClient(), "namespaces", core.NamespaceAll, fields.Everything())
+	_, namespaceController := cache.NewInformer(
+		namespaceList,
+		&v1core.Namespace{},
+		-1,
+		cache.ResourceEventHandlerFuncs{
+			AddFunc:    namespaceAdded,
+			DeleteFunc: namespaceDeleted,
+		})
+	namespaceController.Run(wait.NeverStop)
 }
 
 // Only used in the resource deleted field
@@ -108,4 +120,30 @@ func ResourceUpdated(old interface{}, obj interface{}) {
 	// create kctl deployment struct
 	log.Debug("Resource Updated")
 	SaveResource(obj)
+}
+
+func namespaceAdded(obj interface{}) {
+	namespace := obj.(*v1core.Namespace)
+	// CHECK IF EXISTS, if it doesn't then create
+	dirPath := filepath.Join(createPath, namespace.Name)
+	if _, err := os.Stat(dirPath); os.IsNotExist(err) {
+		// need to create this path
+		log.Info("namespace: ", namespace.Name, " Added")
+		os.MkdirAll(dirPath, 0777)
+	}
+}
+
+func namespaceDeleted(obj interface{}) {
+	namespace := obj.(*v1core.Namespace)
+	log.Info("namespace", namespace.Name, " Deleted")
+	// if Path doesnt exist
+	dirPath := filepath.Join(createPath, namespace.Name)
+	if _, err := os.Stat(dirPath); !os.IsNotExist(err) {
+		// need to create this path
+		if os.RemoveAll(dirPath+"/") != nil {
+			log.Error("Could not clear old dir struct")
+		}
+	} else {
+		log.Error("Tried to delete a namespace that was not found in repo")
+	}
 }
