@@ -129,7 +129,9 @@ func namespaceAdded(obj interface{}) {
 	if _, err := os.Stat(dirPath); os.IsNotExist(err) {
 		// need to create this path
 		log.Info("namespace: ", namespace.Name, " Added")
-		os.MkdirAll(dirPath, 0777)
+		if os.MkdirAll(dirPath, 0777) != nil {
+			log.Error("Error creating namespace path")
+		}
 	}
 }
 
