@@ -183,6 +183,7 @@ func sync() {
 
 // initialize the remote git repo by pulling it. We will need to run this step first every time deck hand is init.
 func gitPullMaster() {
+	log.Debug("Pulling From master repo")
 	r, err := git.PlainOpen(directory)
 	CheckIfError(err)
 	worktree, err := r.Worktree()
@@ -192,12 +193,15 @@ func gitPullMaster() {
 	pullerr := worktree.Pull(&git.PullOptions{
 		RemoteName: "origin",
 		Auth:       auth,
+		Progress:   os.Stdout,
 	})
 
 	if pullerr != nil {
 		errstr := pullerr.Error()
 		if errstr != "already up-to-date" {
 			log.Info(errstr)
+		} else {
+			log.Info("Pull Already up-to-date")
 		}
 	}
 }
