@@ -49,20 +49,20 @@ func WatchApis() {
 	// Only use Replica Sets if we need to since deploys == rs
 
 	if deck_config.UseReplicaSets == true {
-		go WatchList("relicasets", &v1.ReplicaSet{}).Run(wait.NeverStop)
+		WatchList("relicasets", &v1.ReplicaSet{}).Run(wait.NeverStop)
 	}
 
 	// Only get Secrets, Config Maps, Services only if store_all is set
 	if deck_config.STORE_ALL == true {
-		go WatchList(string(v1core.ResourceServices), &v1core.Service{}).Run(wait.NeverStop)
-		go WatchList("secrets", &v1core.Secret{}).Run(wait.NeverStop)
-		go WatchList(string(v1core.ResourceConfigMaps), &v1core.ConfigMap{}).Run(wait.NeverStop)
+		WatchList(string(v1core.ResourceServices), &v1core.Service{}).Run(wait.NeverStop)
+		WatchList("secrets", &v1core.Secret{}).Run(wait.NeverStop)
+		WatchList(string(v1core.ResourceConfigMaps), &v1core.ConfigMap{}).Run(wait.NeverStop)
 	}
 
 	// IDK if I need all these
-	go controller.Run(wait.NeverStop)
-	go controllerSS.Run(wait.NeverStop)
-	go controllerDS.Run(wait.NeverStop)
+	controller.Run(wait.NeverStop)
+	controllerSS.Run(wait.NeverStop)
+	controllerDS.Run(wait.NeverStop)
 
 	// Watch for namespaces are different
 	namespaceList := cache.NewListWatchFromClient(clientset.CoreV1().RESTClient(), "namespaces", core.NamespaceAll, fields.Everything())

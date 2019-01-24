@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: deckhand
+  labels:
+    app: deckhand
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: deckhand
+  template:
+    metadata:
+      labels:
+        app: deckhand
+    spec:
+      containers:
+        - name: deckhand
+          image: nfons/deckhand:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: DECK_GIT_REPO
+              value: [[ YOUR SSH GIT REPO... i.e git@github.com:nfons/deckhand-example.git ]]
+            - name: DECK_SSH_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: git-ssh-key
+                  key: [[ NAME OF YOUR SSH KEY FILE ]]
