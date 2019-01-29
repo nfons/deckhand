@@ -12,6 +12,7 @@ import (
 
 // We need to redo this logic to get rid of some of this damn copy and paste crap...ideally I would like to
 // type cast all these to some struct so I can get the relevant fields from it
+// We also need to do resource.Metadata.ResourceVersion = "" because sometimes resource # gets updated w/o any useful update
 func SaveResource(obj interface{}) {
 	resource := KubeStruct{}
 	var namespacePath string
@@ -23,42 +24,49 @@ func SaveResource(obj interface{}) {
 		resource.ApiVersion = "apps/v1"
 		resource.Kind = "DaemonSet"
 		resource.Metadata = val.ObjectMeta
+		resource.Metadata.ResourceVersion = ""
 		resource.Spec = val.Spec
 		namespacePath = filepath.Join(createPath, val.Namespace)
 	case *v1.StatefulSet:
 		resource.ApiVersion = "apps/v1"
 		resource.Kind = "StatefulSet"
 		resource.Metadata = val.ObjectMeta
+		resource.Metadata.ResourceVersion = ""
 		resource.Spec = val.Spec
 		namespacePath = filepath.Join(createPath, val.Namespace)
 	case *v1.Deployment:
 		resource.ApiVersion = "apps/v1"
 		resource.Kind = "Deployment"
 		resource.Metadata = val.ObjectMeta
+		resource.Metadata.ResourceVersion = ""
 		resource.Spec = val.Spec
 		namespacePath = filepath.Join(createPath, val.Namespace)
 	case *v1.ReplicaSet:
 		resource.ApiVersion = "apps/v1"
 		resource.Kind = "ReplicaSet"
 		resource.Metadata = val.ObjectMeta
+		resource.Metadata.ResourceVersion = ""
 		resource.Spec = val.Spec
 		namespacePath = filepath.Join(createPath, val.Namespace)
 	case *v1core.Service:
 		resource.ApiVersion = "v1"
 		resource.Kind = "Service"
 		resource.Metadata = val.ObjectMeta
+		resource.Metadata.ResourceVersion = ""
 		resource.Spec = val.Spec
 		namespacePath = filepath.Join(createPath, val.Namespace)
 	case *v1core.Secret:
 		resource.ApiVersion = "v1"
 		resource.Kind = val.Kind
 		resource.Metadata = val.ObjectMeta
+		resource.Metadata.ResourceVersion = ""
 		resource.Kind = "Secret"
 		resource.Data = val.Data
 		namespacePath = filepath.Join(createPath, val.Namespace)
 	case *v1core.ConfigMap:
 		resource.ApiVersion = "v1"
 		resource.Metadata = val.ObjectMeta
+		resource.Metadata.ResourceVersion = ""
 		resource.Kind = "ConfigMap"
 		resource.Data = val.Data
 		namespacePath = filepath.Join(createPath, val.Namespace)
