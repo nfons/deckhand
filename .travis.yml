@@ -8,6 +8,8 @@ go:
 git:
   depth: 1
 
+before_install:
+  - go get -t -v ./...
 jobs:
   include:
     - stage: "build"
