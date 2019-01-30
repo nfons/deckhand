@@ -29,6 +29,7 @@ jobs:
   deploy:
     <<: *defaults
     steps:
+      - setup_remote_docker
       - attach_workspace:
           at: /go/src/github.com/nfons
       - run:
