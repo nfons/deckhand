@@ -22,9 +22,15 @@ jobs:
           key: v1-pkg-cache
           paths:
             - "/go/pkg"
+      - persist_to_workspace:
+          root: /go/src/github.com/nfons
+          paths:
+            - deckhand
   deploy:
     <<: *defaults
     steps:
+      - attach_workspace:
+          at: /go/src/github.com/nfons
       - run:
           name: "Logging into Docker"
           command: docker login -u=$DOCKER_USER -p=$DOCKER_PASS quay.io
