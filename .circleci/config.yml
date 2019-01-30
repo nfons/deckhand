@@ -1,0 +1,48 @@
+version: 2
+defaults: &defaults
+  docker:
+    - image: circleci/golang:1.11
+      command: /sbin/init
+  working_directory: ~/nfons/deckhand
+
+jobs:
+  build:
+    <<: *defaults
+    steps:
+      - checkout
+      - restore_cache:
+            keys:
+              - v1-pkg-cache
+      - run:
+          name: Install deps
+          command: go get -t -v ./...
+      - run:
+          name: Build Deckhand
+          command: go build -o deckhand
+      - save_cache: # Store cache in the /go/pkg directory
+          key: v1-pkg-cache
+          paths:
+            - "/go/pkg"
+  deploy:
+    <<: *defaults
+    steps:
+      - run:
+          name: "Logging into Docker"
+          command: docker login -u=$DOCKER_USER -p=$DOCKER_PASS quay.io
+      - run: docker build -t deckhand .
+      - run: builds/deploy.sh
+
+workflows:
+  version: 2
+  pr-build:
+    jobs:
+      - build:
+          filters:
+            branches:
+              ingore: master
+  master-deploy:
+    jobs:
+      - build:
+          filters:
+            branches:
+              only: master
