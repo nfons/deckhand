@@ -2,7 +2,7 @@ version: 2
 defaults: &defaults
   docker:
     - image: circleci/golang:1.11
-  working_directory: ~/nfons/deckhand
+  working_directory: /go/src/github.com/nfons/deckhand
 
 jobs:
   build:
