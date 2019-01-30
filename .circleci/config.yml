@@ -2,7 +2,6 @@ version: 2
 defaults: &defaults
   docker:
     - image: circleci/golang:1.11
-      command: /sbin/init
   working_directory: ~/nfons/deckhand
 
 jobs:
