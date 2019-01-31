@@ -42,27 +42,22 @@ func WatchList(resource string, resourceType runtime.Object) cache.Controller {
 	This Code Will listen to the Kube API and run file saver based on the resource returned by API Server
 */
 func WatchApis() {
-	controller := WatchList("deployments", &v1.Deployment{})
-	controllerSS := WatchList("statefulsets", &v1.StatefulSet{})
-	controllerDS := WatchList("daemonsets", &v1.DaemonSet{})
+	go WatchList("statefulsets", &v1.StatefulSet{}).Run(wait.NeverStop)
+	go WatchList("deployments", &v1.Deployment{}).Run(wait.NeverStop)
+	go WatchList("daemonsets", &v1.DaemonSet{}).Run(wait.NeverStop)
 
 	// Only use Replica Sets if we need to since deploys == rs
 
 	if deck_config.UseReplicaSets == true {
-		WatchList("relicasets", &v1.ReplicaSet{}).Run(wait.NeverStop)
+		go WatchList("relicasets", &v1.ReplicaSet{}).Run(wait.NeverStop)
 	}
 
 	// Only get Secrets, Config Maps, Services only if store_all is set
 	if deck_config.STORE_ALL == true {
-		WatchList(string(v1core.ResourceServices), &v1core.Service{}).Run(wait.NeverStop)
-		WatchList("secrets", &v1core.Secret{}).Run(wait.NeverStop)
-		WatchList(string(v1core.ResourceConfigMaps), &v1core.ConfigMap{}).Run(wait.NeverStop)
+		go WatchList(string(v1core.ResourceServices), &v1core.Service{}).Run(wait.NeverStop)
+		go WatchList("secrets", &v1core.Secret{}).Run(wait.NeverStop)
+		go WatchList(string(v1core.ResourceConfigMaps), &v1core.ConfigMap{}).Run(wait.NeverStop)
 	}
-
-	// IDK if I need all these
-	controller.Run(wait.NeverStop)
-	controllerSS.Run(wait.NeverStop)
-	controllerDS.Run(wait.NeverStop)
 
 	// Watch for namespaces are different
 	namespaceList := cache.NewListWatchFromClient(clientset.CoreV1().RESTClient(), "namespaces", core.NamespaceAll, fields.Everything())
@@ -74,7 +69,7 @@ func WatchApis() {
 			AddFunc:    namespaceAdded,
 			DeleteFunc: namespaceDeleted,
 		})
-	namespaceController.Run(wait.NeverStop)
+	go namespaceController.Run(wait.NeverStop)
 }
 
 // Only used in the resource deleted field
